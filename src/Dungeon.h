@@ -11,5 +11,6 @@ public:
 	// todo: initialize from json
 
 	static bool IsInBounds(int x, int y);
+	static bool IsPassable(int x, int y);
 	static Tile* GetTile(int x, int y);
 };
