@@ -10,6 +10,10 @@ add_subdirectory(src/lib/gueepo2D/gueepo2D/engine)
 set_target_properties(glad gueepo2D-engine PROPERTIES FOLDER thirdparty)
 
 add_executable(${PROJECT_NAME}
+    src/Tile.h
+    src/Tile.cpp
+    src/Dungeon.h
+    src/Dungeon.cpp
     src/main.cpp
 )
 

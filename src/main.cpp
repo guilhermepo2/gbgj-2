@@ -1,12 +1,22 @@
 #define GUEEPO2D_MAIN
 #include <gueepo2d.h>
 
+#include "Tile.h"
+#include "Dungeon.h"
+
 static gueepo::FontSprite* dogicaPixel = nullptr;
 static gueepo::Texture* mainTexture = nullptr;
 static gueepo::TextureRegion* portrait = nullptr;
 
-// Main Character Animations!
-static gueepo::SpriteAnimation heroIdle;
+static gueepo::TextureRegion* passable = nullptr;
+static gueepo::TextureRegion* unpassable = nullptr;
+
+static struct {
+	int x;
+	int y;
+
+	gueepo::SpriteAnimation heroIdle;
+} heroData;
 
 class GBGJ2 : public gueepo::Application {
 public:
@@ -26,6 +36,7 @@ private:
 
 void GBGJ2::Application_OnInitialize() {
 	m_Camera = new gueepo::OrtographicCamera(640, 360);
+	m_Camera->SetPosition(gueepo::math::vec3(0.2f, -0.75f, 0.0f));
 	m_Camera->SetBackgroundColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 	gueepo::Font* dogicaPixelFontFile = gueepo::Font::CreateNewFont("./assets/font/dogicapixelbold.ttf");
@@ -37,12 +48,19 @@ void GBGJ2::Application_OnInitialize() {
 
 	mainTexture = gueepo::Texture::Create("./assets/sheet.png");
 	portrait = new gueepo::TextureRegion(mainTexture, 0, 0, 32, 32);
+	passable = new gueepo::TextureRegion(mainTexture, 176, 160, 16, 16);
+	unpassable = new gueepo::TextureRegion(mainTexture, 176, 144, 16, 16);
 
 	// Hero Idle Animation
-	heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 0, 176, 16, 16),  0.4f);
-	heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 16, 176, 16, 16), 0.2f);
-	heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 32, 176, 16, 16), 0.4f);
-	heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 48, 176, 16, 16), 0.2f);
+	heroData.heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 0, 176, 16, 16),  0.4f);
+	heroData.heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 16, 176, 16, 16), 0.2f);
+	heroData.heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 32, 176, 16, 16), 0.4f);
+	heroData.heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 48, 176, 16, 16), 0.2f);
+	heroData.x = 2;
+	heroData.y = -2;
+
+	// Dungeon
+	Dungeon::Initialize();
 }
 
 void GBGJ2::Application_OnDeinitialize() {
@@ -51,7 +69,7 @@ void GBGJ2::Application_OnDeinitialize() {
 }
 
 void GBGJ2::Application_OnUpdate(float DeltaTime) {
-	gueepo::SpriteAnimation_Update(heroIdle, DeltaTime);
+	gueepo::SpriteAnimation_Update(heroData.heroIdle, DeltaTime);
 }
 
 void GBGJ2::Application_OnInput(const gueepo::InputState& currentInputState) {
@@ -63,12 +81,33 @@ void GBGJ2::Application_OnRender() {
 	gueepo::Renderer::BeginFrame(*m_Camera);
 	gueepo::Renderer::Clear(bgColor.rgba);
 
-	gueepo::Renderer::Draw(heroIdle.GetCurrentFrameTextureRegion(), 0, 0, 32, 32);
+	// Drawing the Dungeon
+	const int DungeonSpriteSize = 32;
+	for (int x = 0; x < DUNGEON_DIMENSION; x++) {
+		for (int y = 0; y < DUNGEON_DIMENSION; y++) {
+			Tile* t = Dungeon::GetTile(x, y);
 
+			if (t->isPassable) {
+				gueepo::Renderer::Draw(passable, t->x * DungeonSpriteSize, t->y * DungeonSpriteSize, DungeonSpriteSize, DungeonSpriteSize);
+			}
+			else {
+				gueepo::Renderer::Draw(unpassable, t->x * DungeonSpriteSize, t->y * DungeonSpriteSize, DungeonSpriteSize, DungeonSpriteSize);
+			}
+
+		}
+	}
+
+	gueepo::Renderer::Draw(
+		heroData.heroIdle.GetCurrentFrameTextureRegion(), 
+		heroData.x * DungeonSpriteSize, heroData.y * DungeonSpriteSize, DungeonSpriteSize, DungeonSpriteSize
+	);
+
+	/*
 	gueepo::Renderer::Draw(portrait, -250, -125, 64, 64);
 	gueepo::Renderer::DrawString(
 		dogicaPixel, "Alright, I will do that.\nTomorrow.", gueepo::math::vec2(-200.0f, -110.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
 	);
+	*/
 	gueepo::Renderer::EndFrame();
 }
 
