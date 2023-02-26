@@ -49,6 +49,8 @@ static void LoadLevel(int level) {
 			Dungeon::InitializeFromJson(firstLevel);
 		}
 	}
+
+	hero->SetPosition(Dungeon::GetCurrentPlayerStartPosition());
 }
 
 void GBGJ2::Application_OnInitialize() {
@@ -77,8 +79,7 @@ void GBGJ2::Application_OnInitialize() {
 	hero = new Monster(passable, gueepo::math::vec2(2.0f, 2.0f), 3, true);
 
 	//
-	LoadLevel(1);
-	hero->SetPosition(Dungeon::GetCurrentPlayerStartPosition());
+	LoadLevel(0);
 }
 
 void GBGJ2::Application_OnDeinitialize() {
