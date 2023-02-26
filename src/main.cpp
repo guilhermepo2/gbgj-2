@@ -3,6 +3,7 @@
 
 #include "Tile.h"
 #include "Dungeon.h"
+#include "Monster.h"
 
 static gueepo::FontSprite* dogicaPixel = nullptr;
 static gueepo::Texture* mainTexture = nullptr;
@@ -11,12 +12,10 @@ static gueepo::TextureRegion* portrait = nullptr;
 static gueepo::TextureRegion* passable = nullptr;
 static gueepo::TextureRegion* unpassable = nullptr;
 
-static struct {
-	int x;
-	int y;
-	gueepo::math::vec2 offset;
-	bool facingRight = true;
+static Monster* hero;
 
+
+static struct {
 	gueepo::SpriteAnimation heroIdle;
 } heroData;
 
@@ -58,8 +57,7 @@ void GBGJ2::Application_OnInitialize() {
 	heroData.heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 16, 176, 16, 16), 0.2f);
 	heroData.heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 32, 176, 16, 16), 0.4f);
 	heroData.heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 48, 176, 16, 16), 0.2f);
-	heroData.x = 2;
-	heroData.y = 2;
+	hero = new Monster(passable, gueepo::math::vec2(2.0f, 2.0f), 3, true);
 
     // json shenanigans
     int levelToLoad = 1;
@@ -86,19 +84,7 @@ void GBGJ2::Application_OnUpdate(float DeltaTime) {
 	gueepo::SpriteAnimation_Update(heroData.heroIdle, DeltaTime);
 
 	// Handling Offset
-
-	if (heroData.offset.x != 0.0f || heroData.offset.y != 0.0f) {
-		heroData.offset.x -= gueepo::math::sign(heroData.offset.x) * DeltaTime * 256;
-		heroData.offset.y -= gueepo::math::sign(heroData.offset.y) * DeltaTime * 256;
-
-		if (gueepo::math::abs(heroData.offset.x) < 3.0f) {
-			heroData.offset.x = 0.0f;
-		}
-
-		if (gueepo::math::abs(heroData.offset.y) < 3.0f) {
-			heroData.offset.y = 0.0f;
-		}
-	}
+	hero->TickOffset(DeltaTime);
 }
 
 void GBGJ2::Application_OnInput(const gueepo::InputState& currentInputState) {
@@ -113,20 +99,17 @@ void GBGJ2::Application_OnInput(const gueepo::InputState& currentInputState) {
 	}
 	else if (currentInputState.Keyboard.WasKeyPressedThisFrame(gueepo::Keycode::KEYCODE_D)) {
 		heroMoveX = 1;
-		heroData.facingRight = true;
 	}
 	else if (currentInputState.Keyboard.WasKeyPressedThisFrame(gueepo::Keycode::KEYCODE_A)) {
 		heroMoveX = -1;
-		heroData.facingRight = false;
 	}
 
 	// making sure the player has moved before going on about changing its positions and offsets
 	if (heroMoveX != 0 || heroMoveY != 0) {
-		if (Dungeon::IsPassable(heroData.x + heroMoveX, heroData.y + heroMoveY)) {
-			heroData.x += heroMoveX;
-			heroData.y += heroMoveY;
-			heroData.offset.x = -heroMoveX * 32;
-			heroData.offset.y = -heroMoveY * 32;
+		int desiredX = hero->GetPosition().x + heroMoveX;
+		int desiredY = hero->GetPosition().y + heroMoveY;
+		if (Dungeon::IsPassable(desiredX, desiredY)) {
+			hero->Move(heroMoveX, heroMoveY);
 		}
 	}
 }
@@ -152,13 +135,13 @@ void GBGJ2::Application_OnRender() {
 		}
 	}
 
-	const int HeroFacingSign = heroData.facingRight ? 1 : -1;
-	int offsetX = heroData.offset.x;
-	int offsetY = heroData.offset.y;
+	const int HeroFacingSign = hero->IsFacingRight() ? 1 : -1;
+	int offsetX = hero->GetOffset().x;
+	int offsetY = hero->GetOffset().y;
 	gueepo::Renderer::Draw(
 		heroData.heroIdle.GetCurrentFrameTextureRegion(), 
-		(heroData.x * DungeonSpriteSize) + offsetX, 
-		(heroData.y * DungeonSpriteSize) + offsetY,
+		(hero->GetPosition().x * DungeonSpriteSize) + offsetX,
+		(hero->GetPosition().y * DungeonSpriteSize) + offsetY,
 		HeroFacingSign * DungeonSpriteSize, DungeonSpriteSize
 	);
 

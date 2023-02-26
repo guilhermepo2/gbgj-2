@@ -14,6 +14,8 @@ add_executable(${PROJECT_NAME}
     src/Tile.cpp
     src/Dungeon.h
     src/Dungeon.cpp
+    src/Monster.h
+    src/Monster.cpp
     src/main.cpp
 )
 
