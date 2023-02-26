@@ -61,8 +61,20 @@ void GBGJ2::Application_OnInitialize() {
 	heroData.x = 2;
 	heroData.y = 2;
 
-	// Dungeon
-	Dungeon::Initialize();
+    // json shenanigans
+    int levelToLoad = 1;
+    gueepo::json levels("./assets/levels.json");
+
+    if(levels.IsValid()) {
+        gueepo::json levelsArray;
+        levels.GetArray("levels", levelsArray);
+
+        if(levelsArray.IsArray()) {
+            gueepo::json firstLevel;
+            levelsArray.GetObjectInArray(levelToLoad, firstLevel);
+            Dungeon::InitializeFromJson(firstLevel);
+        }
+    }
 }
 
 void GBGJ2::Application_OnDeinitialize() {

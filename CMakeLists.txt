@@ -48,7 +48,7 @@ if(APPLE)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/assets)
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/src/assets $<TARGET_FILE_DIR:${PROJECT_NAME}>/../build/assets
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/src/assets ${CMAKE_BINARY_DIR}/assets
     )
     endif()
 endif()
