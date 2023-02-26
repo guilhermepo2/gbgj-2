@@ -2,6 +2,7 @@
 #include "Tile.h"
 
 static Tile theDungeon[DUNGEON_DIMENSION][DUNGEON_DIMENSION];
+static gueepo::math::vec2 CurrentPlayerStartPosition;
 
 void Dungeon::Initialize() {
 	for (int y = 0; y < DUNGEON_DIMENSION; y++) {
@@ -49,10 +50,20 @@ void Dungeon::InitializeFromJson(gueepo::json jsonFile) {
                 case 1: {
                     theDungeon[x][y].isPassable = false;
                 } break;
+                case 2: {
+                    theDungeon[x][y].isPassable = true;
+                    theDungeon[x][y].isPlayerPortal = true;
+                    CurrentPlayerStartPosition.x = x;
+                    CurrentPlayerStartPosition.y = y;
+                }
             }
 
         }
     }
+}
+
+gueepo::math::vec2 Dungeon::GetCurrentPlayerStartPosition() {
+    return CurrentPlayerStartPosition;
 }
 
 bool Dungeon::IsInBounds(int x, int y) {

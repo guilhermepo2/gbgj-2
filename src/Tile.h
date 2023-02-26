@@ -5,6 +5,7 @@ public:
 	int x;
 	int y;
 	bool isPassable;
+	bool isPlayerPortal; // this is where the player starts and has to go back to...
 
 	// monster
 	// treasure?

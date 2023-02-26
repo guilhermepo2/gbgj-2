@@ -11,6 +11,7 @@ static gueepo::TextureRegion* portrait = nullptr;
 
 static gueepo::TextureRegion* passable = nullptr;
 static gueepo::TextureRegion* unpassable = nullptr;
+static gueepo::TextureRegion* playerPortal = nullptr;
 
 static Monster* hero;
 
@@ -35,6 +36,21 @@ private:
 	gueepo::OrtographicCamera* m_Camera;
 };
 
+static void LoadLevel(int level) {
+	gueepo::json levels("./assets/levels.json");
+
+	if (levels.IsValid()) {
+		gueepo::json levelsArray;
+		levels.GetArray("levels", levelsArray);
+
+		if (levelsArray.IsArray()) {
+			gueepo::json firstLevel;
+			levelsArray.GetObjectInArray(level, firstLevel);
+			Dungeon::InitializeFromJson(firstLevel);
+		}
+	}
+}
+
 void GBGJ2::Application_OnInitialize() {
 	m_Camera = new gueepo::OrtographicCamera(640, 360);
 	m_Camera->SetPosition(gueepo::math::vec3(0.2f, 0.55f, 0.0f));
@@ -51,6 +67,7 @@ void GBGJ2::Application_OnInitialize() {
 	portrait = new gueepo::TextureRegion(mainTexture, 0, 0, 32, 32);
 	passable = new gueepo::TextureRegion(mainTexture, 176, 160, 16, 16);
 	unpassable = new gueepo::TextureRegion(mainTexture, 176, 144, 16, 16);
+	playerPortal = new gueepo::TextureRegion(mainTexture, 160, 160, 16, 16);
 
 	// Hero Idle Animation
 	heroData.heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 0, 176, 16, 16),  0.4f);
@@ -59,20 +76,9 @@ void GBGJ2::Application_OnInitialize() {
 	heroData.heroIdle.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 48, 176, 16, 16), 0.2f);
 	hero = new Monster(passable, gueepo::math::vec2(2.0f, 2.0f), 3, true);
 
-    // json shenanigans
-    int levelToLoad = 1;
-    gueepo::json levels("./assets/levels.json");
-
-    if(levels.IsValid()) {
-        gueepo::json levelsArray;
-        levels.GetArray("levels", levelsArray);
-
-        if(levelsArray.IsArray()) {
-            gueepo::json firstLevel;
-            levelsArray.GetObjectInArray(levelToLoad, firstLevel);
-            Dungeon::InitializeFromJson(firstLevel);
-        }
-    }
+	//
+	LoadLevel(1);
+	hero->SetPosition(Dungeon::GetCurrentPlayerStartPosition());
 }
 
 void GBGJ2::Application_OnDeinitialize() {
@@ -125,7 +131,9 @@ void GBGJ2::Application_OnRender() {
 		for (int y = 0; y < DUNGEON_DIMENSION; y++) {
 			Tile* t = Dungeon::GetTile(x, y);
 
-			if (t->isPassable) {
+			if (t->isPlayerPortal) {
+				gueepo::Renderer::Draw(playerPortal, t->x * DungeonSpriteSize, t->y * DungeonSpriteSize, DungeonSpriteSize, DungeonSpriteSize);
+			} else if (t->isPassable) {
 				gueepo::Renderer::Draw(passable, t->x * DungeonSpriteSize, t->y * DungeonSpriteSize, DungeonSpriteSize, DungeonSpriteSize);
 			}
 			else {
@@ -135,22 +143,33 @@ void GBGJ2::Application_OnRender() {
 		}
 	}
 
+	//
 	const int HeroFacingSign = hero->IsFacingRight() ? 1 : -1;
 	int offsetX = hero->GetOffset().x;
 	int offsetY = hero->GetOffset().y;
 	gueepo::Renderer::Draw(
 		heroData.heroIdle.GetCurrentFrameTextureRegion(), 
 		(hero->GetPosition().x * DungeonSpriteSize) + offsetX,
-		(hero->GetPosition().y * DungeonSpriteSize) + offsetY,
+		(hero->GetPosition().y * DungeonSpriteSize) + offsetY + 8,
 		HeroFacingSign * DungeonSpriteSize, DungeonSpriteSize
 	);
 
-	/*
-	gueepo::Renderer::Draw(portrait, -250, -125, 64, 64);
+	gueepo::Renderer::Draw(portrait, -200, -32, 64, 64);
 	gueepo::Renderer::DrawString(
-		dogicaPixel, "Alright, I will do that.\nTomorrow.", gueepo::math::vec2(-200.0f, -110.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+		dogicaPixel, "HUD Stuff", gueepo::math::vec2(-160.0f, -10.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
 	);
-	*/
+	gueepo::Renderer::DrawString(
+		dogicaPixel, "HUD Stuff", gueepo::math::vec2(-160.0f, -26.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+	);
+	gueepo::Renderer::DrawString(
+		dogicaPixel, "HUD Stuff", gueepo::math::vec2(-160.0f, -42.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+	);
+	gueepo::Renderer::DrawString(
+		dogicaPixel, "HUD Stuff", gueepo::math::vec2(-160.0f, -58.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+	);
+	gueepo::Renderer::DrawString(
+		dogicaPixel, "Sample Dialogue Here.", gueepo::math::vec2(-232.0f, 16.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+	);
 	gueepo::Renderer::EndFrame();
 }
 

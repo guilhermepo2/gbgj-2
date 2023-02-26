@@ -17,6 +17,9 @@ public:
 		m_position.x = static_cast<float>(x);
 		m_position.y = static_cast<float>(y);
 	}
+	void SetPosition(gueepo::math::vec2 pos) {
+		m_position = pos;
+	}
 	inline gueepo::math::vec2 GetOffset() const { return m_offset; }
 	inline gueepo::math::vec2 GetRenderPosition() const { return m_position + m_offset; }
 
