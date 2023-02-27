@@ -14,15 +14,20 @@ static gueepo::TextureRegion* unpassable = nullptr;
 static gueepo::TextureRegion* playerPortal = nullptr;
 
 static Monster* hero;
+static bool playerHasTheThing = false;
+static bool isGameOver = false;
 
 
 static struct {
 	gueepo::SpriteAnimation heroIdle;
+	gueepo::SpriteAnimation redThing;
+	gueepo::SpriteAnimation idleEnemy;
+	gueepo::SpriteAnimation angryEnemy;
 } heroData;
 
 class GBGJ2 : public gueepo::Application {
 public:
-    GBGJ2() : Application("goblin bunker!!", 1280, 720) {}
+    GBGJ2() : Application("wntrmt", 1280, 720) {}
 	~GBGJ2() {}
 
 	virtual void Application_OnInitialize() override;
@@ -79,6 +84,21 @@ void GBGJ2::Application_OnInitialize() {
 	hero = new Monster(passable, gueepo::math::vec2(2.0f, 2.0f), 3, true);
 
 	//
+	heroData.redThing.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 0, 128, 16, 16),  0.23f);
+	heroData.redThing.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 16, 128, 16, 16), 0.23f);
+	heroData.redThing.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 32, 128, 16, 16), 0.23f);
+	heroData.redThing.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 48, 128, 16, 16), 0.23f);
+
+	heroData.idleEnemy.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 0, 160, 16, 16), 0.23);
+	heroData.idleEnemy.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 16, 160, 16, 16), 0.23);
+	heroData.idleEnemy.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 32, 160, 16, 16), 0.23);
+	heroData.idleEnemy.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 16, 160, 16, 16), 0.23);
+	heroData.angryEnemy.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 0, 144, 16, 16), 0.23);
+	heroData.angryEnemy.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 16, 144, 16, 16), 0.23);
+	heroData.angryEnemy.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 32, 144, 16, 16), 0.23);
+	heroData.angryEnemy.AddAnimationFrame(new gueepo::TextureRegion(mainTexture, 16, 144, 16, 16), 0.23);
+
+	//
 	LoadLevel(0);
 }
 
@@ -89,6 +109,9 @@ void GBGJ2::Application_OnDeinitialize() {
 
 void GBGJ2::Application_OnUpdate(float DeltaTime) {
 	gueepo::SpriteAnimation_Update(heroData.heroIdle, DeltaTime);
+	gueepo::SpriteAnimation_Update(heroData.redThing, DeltaTime);
+	gueepo::SpriteAnimation_Update(heroData.idleEnemy, DeltaTime);
+	gueepo::SpriteAnimation_Update(heroData.angryEnemy, DeltaTime);
 
 	// Handling Offset
 	hero->TickOffset(DeltaTime);
@@ -117,11 +140,45 @@ void GBGJ2::Application_OnInput(const gueepo::InputState& currentInputState) {
 		int desiredY = hero->GetPosition().y + heroMoveY;
 		if (Dungeon::IsPassable(desiredX, desiredY)) {
 			hero->Move(heroMoveX, heroMoveY);
+
+			if (hero->GetPosition() == Dungeon::GetTheThingPosition()) {
+				playerHasTheThing = true;
+			}
+
+			if (hero->GetPosition() == Dungeon::GetCurrentPlayerStartPosition() && playerHasTheThing) {
+				isGameOver = true;
+			}
 		}
 	}
 }
 
 void GBGJ2::Application_OnRender() {
+
+	if (isGameOver) {
+		gueepo::Renderer::BeginFrame(*m_Camera);
+		gueepo::Renderer::Clear(0.6f, 0.1f, 0.1f, 1.0f);
+
+		gueepo::Renderer::DrawString(
+			dogicaPixel, "Oh no!", 
+			gueepo::math::vec2(25.0f, 125.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+		);
+		gueepo::Renderer::DrawString(
+			dogicaPixel, "unfortunately, you stumbled upon an",
+			gueepo::math::vec2(-70.0f, 110.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+		);
+		gueepo::Renderer::DrawString(
+			dogicaPixel, "unfinished gamejam game!",
+			gueepo::math::vec2(-35.0f, 95.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+		);
+		gueepo::Renderer::DrawString(
+			dogicaPixel, "you may close it safely now.",
+			gueepo::math::vec2(-40.0f, 80.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+		);
+
+		gueepo::Renderer::EndFrame();
+		return;
+	}
+
 	gueepo::Color bgColor = m_Camera->GetBackGroundColor();
 	gueepo::Renderer::BeginFrame(*m_Camera);
 	gueepo::Renderer::Clear(bgColor.rgba);
@@ -141,10 +198,50 @@ void GBGJ2::Application_OnRender() {
 				gueepo::Renderer::Draw(unpassable, t->x * DungeonSpriteSize, t->y * DungeonSpriteSize, DungeonSpriteSize, DungeonSpriteSize);
 			}
 
+			if (t->isTheThing && !playerHasTheThing) {
+				gueepo::Renderer::Draw(
+					heroData.redThing.GetCurrentFrameTextureRegion(),
+					t->x * DungeonSpriteSize,
+					t->y * DungeonSpriteSize,
+					DungeonSpriteSize, DungeonSpriteSize
+				);
+			}
+
 		}
 	}
 
-	//
+	if (!playerHasTheThing) {
+		gueepo::Renderer::Draw(
+			heroData.idleEnemy.GetCurrentFrameTextureRegion(),
+			(1 * DungeonSpriteSize),
+			(6 * DungeonSpriteSize),
+			DungeonSpriteSize, DungeonSpriteSize
+		);
+
+		gueepo::Renderer::Draw(
+			heroData.idleEnemy.GetCurrentFrameTextureRegion(),
+			(6 * DungeonSpriteSize),
+			(4 * DungeonSpriteSize),
+			DungeonSpriteSize, DungeonSpriteSize
+		);
+	}
+	else {
+		gueepo::Renderer::Draw(
+			heroData.angryEnemy.GetCurrentFrameTextureRegion(),
+			(1 * DungeonSpriteSize),
+			(6 * DungeonSpriteSize),
+			DungeonSpriteSize, DungeonSpriteSize
+		);
+
+		gueepo::Renderer::Draw(
+			heroData.angryEnemy.GetCurrentFrameTextureRegion(),
+			(6 * DungeonSpriteSize),
+			(4 * DungeonSpriteSize),
+			DungeonSpriteSize, DungeonSpriteSize
+		);
+	}
+	
+
 	const int HeroFacingSign = hero->IsFacingRight() ? 1 : -1;
 	int offsetX = hero->GetOffset().x;
 	int offsetY = hero->GetOffset().y;
@@ -156,21 +253,24 @@ void GBGJ2::Application_OnRender() {
 	);
 
 	gueepo::Renderer::Draw(portrait, -200, -32, 64, 64);
-	gueepo::Renderer::DrawString(
-		dogicaPixel, "HUD Stuff", gueepo::math::vec2(-160.0f, -10.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
-	);
-	gueepo::Renderer::DrawString(
-		dogicaPixel, "HUD Stuff", gueepo::math::vec2(-160.0f, -26.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
-	);
-	gueepo::Renderer::DrawString(
-		dogicaPixel, "HUD Stuff", gueepo::math::vec2(-160.0f, -42.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
-	);
-	gueepo::Renderer::DrawString(
-		dogicaPixel, "HUD Stuff", gueepo::math::vec2(-160.0f, -58.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
-	);
-	gueepo::Renderer::DrawString(
-		dogicaPixel, "Sample Dialogue Here.", gueepo::math::vec2(-232.0f, 16.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
-	);
+	
+	if (!playerHasTheThing) {
+		gueepo::Renderer::DrawString(
+			dogicaPixel, "Ok, so I just have to get that red thing?", gueepo::math::vec2(-160.0f, -40.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+		);
+		gueepo::Renderer::DrawString(
+			dogicaPixel, "Sounds easy enough.", gueepo::math::vec2(-160.0f, -55.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+		);
+	}
+	else {
+		gueepo::Renderer::DrawString(
+			dogicaPixel, "Hmm... this doesn't look good...", gueepo::math::vec2(-160.0f, -40.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+		);
+		gueepo::Renderer::DrawString(
+			dogicaPixel, "Now I have to go back.", gueepo::math::vec2(-160.0f, -55.0f), 1.0f, gueepo::Color(1.0f, 1.0f, 1.0f, 1.0f)
+		);
+	}
+
 	gueepo::Renderer::EndFrame();
 }
 

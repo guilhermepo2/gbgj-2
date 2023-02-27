@@ -11,6 +11,7 @@ public:
 	static void Initialize();
 	static void InitializeFromJson(gueepo::json jsonFile);
 	static gueepo::math::vec2 GetCurrentPlayerStartPosition();
+	static gueepo::math::vec2 GetTheThingPosition();
 
 	static bool IsInBounds(int x, int y);
 	static bool IsPassable(int x, int y);

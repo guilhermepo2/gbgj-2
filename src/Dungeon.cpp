@@ -3,6 +3,7 @@
 
 static Tile theDungeon[DUNGEON_DIMENSION][DUNGEON_DIMENSION];
 static gueepo::math::vec2 CurrentPlayerStartPosition;
+static gueepo::math::vec2 TheThingPosition;
 
 void Dungeon::Initialize() {
 	for (int y = 0; y < DUNGEON_DIMENSION; y++) {
@@ -55,6 +56,16 @@ void Dungeon::InitializeFromJson(gueepo::json jsonFile) {
                     theDungeon[x][y].isPlayerPortal = true;
                     CurrentPlayerStartPosition.x = x;
                     CurrentPlayerStartPosition.y = y;
+                } break;
+                case 3: {
+                    theDungeon[x][y].isPassable = true;
+                    theDungeon[x][y].isTheThing = true;
+                    TheThingPosition.x = x;
+                    TheThingPosition.y = y;
+                } break;
+                case 9: {
+                    // this is suposed to be enemies
+                    theDungeon[x][y].isPassable = true;
                 }
             }
 
@@ -64,6 +75,10 @@ void Dungeon::InitializeFromJson(gueepo::json jsonFile) {
 
 gueepo::math::vec2 Dungeon::GetCurrentPlayerStartPosition() {
     return CurrentPlayerStartPosition;
+}
+
+gueepo::math::vec2 Dungeon::GetTheThingPosition() {
+    return TheThingPosition;
 }
 
 bool Dungeon::IsInBounds(int x, int y) {
